@@ -13,6 +13,7 @@ from .header import create_header_section
 from src.Model.StaticData.StaticData import SYSTEM_TYPES, SYSTEM_LEVELS_BY_TYPE, SYSTEM_LEVEL_SHAPES
 from src.View.parameters.BigPopupCombo import BigPopupCombo
 from src.View.parameters.CheckableComboBox import CheckableComboBox
+from src.View.parameters.MultipleText import MultipleText
 from src.View.parameters.ElidingLabel import ElidingLabel
 from src.View.popups.DistributionsPopup import DistributionPopup
 from src.View.popups.DigitizerPopup import DigitizerPopup
@@ -187,10 +188,36 @@ class InspectorSection:
             vpad: vertical padding on the row
             spacer: number of empty row to add after
         """
-        row_item = QStandardItem()
-        model.appendRow(row_item)
-        self.listview.setIndexWidget(row_item.index(), widget)
-        self._apply_row_height(row_item, widget, fs, vpad=vpad)
+        # Get the input widget if there is any
+        widgetLayout = widget.layout()
+        inputWidget = None
+        if widgetLayout:
+            inputWidget = widgetLayout.itemAt(1).widget()
+
+        if isinstance(inputWidget, MultipleText):
+            labelWidget: QLabel         = widget.layout().takeAt(0).widget()
+            inputWidget: MultipleText   = widget.layout().takeAt(0).widget()
+
+            currentLayout = widget.layout()
+            currentLayout.deleteLater()
+            widget.deleteLater()
+
+            inputWidget.layout().itemAt(0).widget().layout().insertWidget(0, labelWidget, alignment=Qt.AlignmentFlag.AlignVCenter)
+            inputWidget.layout().itemAt(0).widget().layout().insertStretch(1, 1)
+
+            row_item = QStandardItem()
+            model.appendRow(row_item)
+            self.listview.setIndexWidget(row_item.index(), inputWidget)
+            self._apply_row_height(row_item, inputWidget, fs, vpad=vpad)
+            
+            
+
+        else:
+            row_item = QStandardItem()
+            model.appendRow(row_item)
+            self.listview.setIndexWidget(row_item.index(), widget)
+            self._apply_row_height(row_item, widget, fs, vpad=vpad)
+        
         if spacer:
             self._add_spacer(model, spacer)
         
@@ -323,7 +350,7 @@ class InspectorSection:
         if gate_object.path != ControlAPI.getObjectPath("PHYSICS"):
             return
         
-        btn = self._button("➕", font_size, 40, click=lambda: PhysicsProcessPopup(
+        btn = self._button("Add ➕", font_size, 120, click=lambda: PhysicsProcessPopup(
             self.host, self.host.populate_hierarchy_tree, []
             ).exec())
         self._append_widget_row(model, btn, font_size)
@@ -344,7 +371,6 @@ class InspectorSection:
             self.host, self.host.populate_hierarchy_tree, []
             ).exec()
         )
-        
         self._append_widget_row(model, btn, font_size)
 
     def _maybe_add_actor_plus(self, model: QStandardItemModel, gate_object: GateObjectInterface, font_size: int):
@@ -612,7 +638,7 @@ class InspectorSection:
             inputs.append(w)
         
         unit_dd = None
-        if getattr(param, "unitList", None) and param.inputType == "text":
+        if getattr(param, "unitList", None) and "text" == param.inputType:
             unit_dd = self._combo(fontSize, items=param.unitList, width=100)
             default_index = param.defaultUnitIndex
             unit_dd.setCurrentIndex(default_index)
@@ -635,6 +661,7 @@ class InspectorSection:
 
         buildWidget = {
             "text": self._build_text_widget,
+            "multiple_text": self._build_multiple_text_widget,
             "dropdown": self._build_dropdown_widget,
             "macro_dropdown": self._build_dropdown_widget,
             "dynamic_dropdown": self._build_dropdown_widget,
@@ -645,7 +672,7 @@ class InspectorSection:
             "children_name_dropdown": self._build_dropdown_widget,
             "attached_volume_dropdown": self._build_dropdown_widget,
             "attached_volume_checkbox": self._build_checkbox_widget,
-            "digitizer_detector_dropdown": self._build_dropdown_widget,
+            "checkable_digitizer_detector_dropdown": self._build_checkable_dropdown_widget,
             "dynamic_object_name_dropdown": self._build_dropdown_widget
         }
 
@@ -672,6 +699,26 @@ class InspectorSection:
         w.textEdited.connect(lambda _: setattr(w, "_edited", True))
         w.editingFinished.connect(lambda: 
                               self.updateParamTextValue(w, objectPath, param.displayedLabel, fieldIndex, w.text()))
+        return w
+
+    def _build_multiple_text_widget(self, objectPath: str, param: GateParameterInterface, fieldIndex: int, fontSize: int):
+        """
+        Build the multiple text input widget.
+
+        Args:
+            objectPath: path to the object selected in the hierarchy section
+            param: gate parameter representing the parameter row
+            fieldIndex: index of the value field (There can be multiple field possible, but generally, there is only one -> fieldIndex = 0)
+            fontSize: font size
+        """
+        w = MultipleText(param.unitList)
+        w.setFont(self._font(fontSize))
+        w.lineEdit.setFixedWidth(60 + fontSize)
+        if len(w.units) > 0:
+            w.unitDropdown.setFixedWidth(120 + fontSize * 2)
+        w.addButton.setFixedHeight(24 + fontSize * 2)
+        w.addValues(param.valueList[fieldIndex])
+        w.dataChanged.connect(lambda: self.updateParamMultipleTextValue(w, objectPath, param.displayedLabel, fieldIndex))
         return w
 
     def _build_dropdown_widget(self, objectPath: str, param: GateParameterInterface, fieldIndex: int, fontSize: int):
@@ -802,13 +849,32 @@ class InspectorSection:
             fieldIndex: index of the value field (There can be multiple field possible, but generally, there is only one -> fieldIndex = 0)
             value: new value
         """
-        selected_items = [
+        selectedItems = [
             widget.model().item(i).text() 
             for i in range(widget.model().rowCount()) 
             if widget.model().item(i).checkState() == Qt.CheckState.Checked
         ]
-        ControlAPI.updateGateParamValue(objectPath, paramName, fieldIndex, selected_items)
+        ControlAPI.updateGateParamValue(objectPath, paramName, fieldIndex, selectedItems)
+        self.updateView(objectPath)
 
+    def updateParamMultipleTextValue(self, widget: MultipleText, objectPath: str, paramName: str, fieldIndex: int):
+        """
+        Update data model with user selected value.
+        
+        Args:
+            widget: text widget that had its value changed
+            objectPath: path to the object selected in the hierarchy section
+            paramName: displayed label of the parameter in which the value is changed
+            fieldIndex: index of the value field (There can be multiple field possible, but generally, there is only one -> fieldIndex = 0)
+            value: new value
+        """
+        textValue = []
+        layoutCount = widget.layout().count()
+        for itemIndex in range(1, widget.layout().count()):
+            textValue.append(widget.layout().itemAt(itemIndex).widget().layout().itemAt(2).widget().text())
+
+        ControlAPI.updateGateParamValue(objectPath, paramName, fieldIndex, textValue)
+        self.updateView(objectPath)
 
     def browse_file_for_param(self, button, objectPath: str, paramName: str, fieldIndex: int):
         """
@@ -927,7 +993,9 @@ class InspectorSection:
         selected_item = self.host.hierarchySection.tree.currentItem()
         if selected_item:
             selected_item.setText(0, unique_name)
+            selected_item.setData(0, Qt.ItemDataRole.UserRole, gate_object.path)
         self.host.write_to_console(f"Renamed object to: {unique_name}")
+        self.updateView(gate_object.path)
     
     # -----------------------------
     # Source helpers
@@ -1138,6 +1206,7 @@ class InspectorSection:
         
         def _text_width(fs: int) -> int: return 120 + (fs * 2)
         def _dd_width(fs: int)   -> int: return 220 + (fs * 2)
+        def _bt_width(fs: int)   -> int: return self._control_height(font_size)
 
         for entry in self.inspector_widgets:
             # ---- normalize entry  ----
@@ -1160,24 +1229,41 @@ class InspectorSection:
             if isinstance(label, QLabel):
                 label.setFont(QFont(label.font().family(), font_size))
                 if hasattr(self, "_label_min_px"):
-                    label.setMinimumWidth(self._label_min_px(font_size))
+                    label.setMinimumWidth(self._label_min_px(font_size, len(label.text())))
 
             # ---- input widgets ----
             for w in inputs:
                 if not w:
                     continue
-                w.setFont(QFont(w.font().family(), font_size))
+                if isinstance(w, MultipleText):
+                    # First Row
+                    w.lineEdit.setFixedWidth(_text_width(font_size))
+                    w.lineEdit.setSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Fixed)
+                    if len(w.units) > 0:
+                        w.unitDropdown.setFixedWidth(_dd_width(font_size))
+                    w.addButton.setFixedWidth(_dd_width(font_size))
+                    # Other Rows
+                    for rowWidgetIndex in range(1, w.layout().count()):
+                        rowWidget = w.layout().itemAt(rowWidgetIndex).widget()
+                        deleteButton: QPushButton = rowWidget.layout().itemAt(0).widget()
+                        deleteButton.setFixedWidth(_bt_width(font_size))
+                        dataText: QLabel = rowWidget.layout().itemAt(2).widget()
+                        dataText.setFont(QFont(label.font().family(), font_size))
+                        if hasattr(self, "_label_min_px"):
+                            dataText.setMinimumWidth(self._label_min_px(font_size, len(dataText.text())))
+                else:
+                    w.setFont(QFont(w.font().family(), font_size))
 
-                # consistent widths per type
-                if isinstance(w, QLineEdit):
-                    w.setFixedWidth(_text_width(font_size))
-                    w.setSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Fixed)
-                elif isinstance(w, (QComboBox, BigPopupCombo)):
-                    w.setFixedWidth(_dd_width(font_size))
-                elif isinstance(w, QCheckBox):
-                    w.setStyleSheet("")
-                elif isinstance(w, QPushButton):
-                    w.setFixedWidth(_dd_width(font_size))
+                    # consistent widths per type
+                    if isinstance(w, (QLineEdit)):
+                        w.setFixedWidth(_text_width(font_size))
+                        w.setSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Fixed)
+                    elif isinstance(w, (QComboBox, BigPopupCombo)):
+                        w.setFixedWidth(_dd_width(font_size))
+                    elif isinstance(w, QCheckBox):
+                        w.setStyleSheet("")
+                    elif isinstance(w, QPushButton):
+                        w.setFixedWidth(_dd_width(font_size))
 
             # ---- unit dropdown  ----
             if isinstance(unit_dd, BigPopupCombo):
@@ -1187,6 +1273,7 @@ class InspectorSection:
 
         # ---- row heights ----
         row_h = self._control_height(font_size)
+        vpadMultiline = 10
         for entry in self.inspector_widgets:
             # apply height to all widgets
             if isinstance(entry, dict):
@@ -1200,15 +1287,50 @@ class InspectorSection:
 
             for w in widgets:
                 if w and hasattr(w, "setFixedHeight"):
-                    w.setFixedHeight(row_h)
+                    if isinstance(w, MultipleText):
+                        layoutCount = w.layout().count()
+                        w.setFixedHeight((row_h + vpadMultiline) * layoutCount)
+                        
+                        # For the first row
+
+                        firstRow = w.layout().itemAt(0).widget()
+                        label: QLabel = firstRow.layout().itemAt(0).widget()
+                        label.setFixedHeight(row_h)
+                        # label.move(label.pos().x(), label.pos().y() - 10)
+                        # firstRow.layout().itemAt(0).widget().setContentsMargins(0,int(vpad/2),0,int(vpad/2))
+
+                        w.lineEdit.setFixedHeight(row_h)
+                        # w.lineEdit.move(w.lineEdit.pos().x(), w.lineEdit.pos().y() - 10)
+                        # w.lineEdit.setContentsMargins(0,int(vpad/2),0,int(vpad/2))
+                        w.addButton.setFixedHeight(row_h)
+                        # w.addButton.setContentsMargins(0,int(vpad/2),0,int(vpad/2))
+                        if len(w.units) > 0:
+                            w.unitDropdown.setFixedHeight(row_h) 
+                            # w.unitDropdown.setContentsMargins(0,int(vpad/2),0,int(vpad/2))
+                        firstRow.setFixedHeight(row_h + vpadMultiline)
+
+                        # For text rows
+                        for rowWidgetIndex in range(1, layoutCount):
+                            rowWidget = w.layout().itemAt(rowWidgetIndex).widget()
+                            rowWidget.setFixedHeight(row_h + vpadMultiline)
+                            rowWidget.layout().itemAt(0).widget().setFixedHeight(row_h)
+                            rowWidget.layout().itemAt(2).widget().setFixedHeight(row_h)
+                            # rowWidget.layout().itemAt(0).widget().setContentsMargins(0,int(vpad/2),0,int(vpad/2))
+                            # rowWidget.layout().itemAt(2).widget().setContentsMargins(0,int(vpad/2),0,int(vpad/2))
+                    else:
+                        w.setFixedHeight(row_h)
 
         # normalize QListView row heights to fix the clipping
         model = self.listview.model()
+        vpad = 4
         if model:
-            vpad = 4
             for r in range(model.rowCount()):
-                it = model.item(r)
+                it: QStandardItem = model.item(r)
                 if it is not None:
                     sh = it.sizeHint()
-                    it.setSizeHint(QSize(sh.width(), row_h + vpad))
+                    widget = self.listview.indexWidget(it.index())
+                    if isinstance(widget, MultipleText):
+                        it.setSizeHint(QSize(sh.width(), (row_h + vpadMultiline) * widget.layout().count()))
+                    else:
+                        it.setSizeHint(QSize(sh.width(), row_h + vpad))
     

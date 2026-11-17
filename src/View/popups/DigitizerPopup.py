@@ -20,7 +20,7 @@ class DigitizerPopup(QDialog):
         super().__init__(parent)
         self.setModal(True)
         self.setWindowTitle("Create Distribution")
-        self.setMinimumSize(360, 180)
+        self.setMinimumSize(360, 240)
         self.setWindowFlag(Qt.WindowType.WindowStaysOnTopHint)
         self.setAttribute(Qt.WidgetAttribute.WA_DeleteOnClose)
 

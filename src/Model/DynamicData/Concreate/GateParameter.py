@@ -12,7 +12,6 @@ class GateParameter(GateParameterInterface):
             displayed_label: str, 
             input_type: str, 
             default_value_list: list[str | int | float],
-            multiplicity: bool = False,
             unit_list: list[str] = [], 
             default_unit_index: int = 0,
             yaml_raw_property: dict[str, str | int | list[str]] = {}
@@ -34,7 +33,6 @@ class GateParameter(GateParameterInterface):
         self._displayedLabel = displayed_label
         self._inputType = input_type
         self._defaultValueList = default_value_list
-        self._multiplicity = multiplicity
         self._valueList = deepcopy(default_value_list)
         self._unitList = unit_list
         self._defaultUnitIndex = default_unit_index
@@ -89,7 +87,7 @@ class GateParameter(GateParameterInterface):
             "checkable_object_name_dropdown": self._receiveNotificationCheckableObjectNameDropdown,
             "children_name_dropdown": self._receiveNotificationChildrenNameDropdown,
             "attached_volume_dropdown": self._receiveNotificationAttachedVolumeDropdown,
-            "digitizer_detector_dropdown": self._receiveNotificationDigitizerDetectorDropdown,
+            "checkable_digitizer_detector_dropdown": self._receiveNotificationCheckableDigitizerDetectorDropdown,
             "dynamic_label": self._receiveNotificationDynamicLabel,
             "dynamic_object_name_dropdown": self._receiveNotificationDynamicObjectNameDropdown
         }
@@ -114,7 +112,7 @@ class GateParameter(GateParameterInterface):
 
         self.unitList: list[str] =  gateTree._getYamlData(listPath)
         if len(self.unitList) == 0:
-            self.unitList = gateTree._getYamlData("placeholder/empty_units")
+            self.unitList = gateTree._getYamlData("constant/EMPTY_UNITS")
 
         self._updateValueList()
 
@@ -132,7 +130,7 @@ class GateParameter(GateParameterInterface):
                 observedObjectList.append(child)
         
         if len(self.unitList) == 0:
-            self.unitList = gateTree._getYamlData("placeholder/empty_units")
+            self.unitList = gateTree._getYamlData("constant/EMPTY_UNITS")
         
         self._updateValueList()
 
@@ -150,7 +148,7 @@ class GateParameter(GateParameterInterface):
                 observedObjectList.append(child)
 
         if len(self.unitList) == 0:
-            self.unitList = gateTree._getYamlData("placeholder/empty_units")
+            self.unitList = gateTree._getYamlData("constant/EMPTY_UNITS")
 
         for fieldIndex, field in enumerate(self.valueList):
             for value in field:
@@ -172,7 +170,7 @@ class GateParameter(GateParameterInterface):
                 observedObjectList.append(child)
         
         if len(self.unitList) == 0:
-            self.unitList = gateTree._getYamlData("placeholder/empty_units")
+            self.unitList = gateTree._getYamlData("constant/EMPTY_UNITS")
         
         self._updateValueList()
 
@@ -190,11 +188,11 @@ class GateParameter(GateParameterInterface):
                 observedObjectList.append(child)
         
         if len(self.unitList) == 0:
-            self.unitList = gateTree._getYamlData("placeholder/empty_units")
+            self.unitList = gateTree._getYamlData("constant/EMPTY_UNITS")
         
         self._updateValueList()
 
-    def _receiveNotificationDigitizerDetectorDropdown(self):
+    def _receiveNotificationCheckableDigitizerDetectorDropdown(self):
         from src.Model.DynamicData.Concreate.GateTree import GateTree
         gateTree = GateTree()
 
@@ -208,9 +206,13 @@ class GateParameter(GateParameterInterface):
                 self.unitList.append(inputName)
 
         if len(self.unitList) == 0:
-            self.unitList = gateTree._getYamlData("placeholder/empty_units")
+            self.unitList = gateTree._getYamlData("constant/EMPTY_UNITS")
 
-        self._updateValueList()
+        for fieldIndex, field in enumerate(self.valueList):
+            for value in field:
+                if value not in self.unitList:
+                    self.valueList[fieldIndex].remove(value)
+                    self.notifyAllSubscriber()
 
     def _receiveNotificationDynamicLabel(self):
         from src.Model.DynamicData.Concreate.GateTree import GateTree
@@ -252,7 +254,7 @@ class GateParameter(GateParameterInterface):
                 observedObjectList.append(child)
         
         if len(self.unitList) == 0:
-            self.unitList = gateTree._getYamlData("placeholder/empty_units")
+            self.unitList = gateTree._getYamlData("constant/EMPTY_UNITS")
         
         self._updateValueList()      
 

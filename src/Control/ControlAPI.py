@@ -48,18 +48,22 @@ class ControlAPI():
         gateObject = ControlAPI._getGateObject(objectPath)
         param = gateObject.param[paramLabel]
 
-        if "text" in param.inputType:
+        if "checkable" in param.inputType:
+            for val in value:
+                if val not in param.unitList:
+                    print(f"\033[33mCannot update valueList attribute of {param} with {value} since it is not a valid value.\033[0m", file=stderr)
+                    return
+        elif "multiple" in param.inputType:
+            for valIndex in range(len(value)):
+                if type(value[valIndex]) == str:
+                    value[valIndex] = float(value[valIndex])
+        elif "text" in param.inputType:
             if value in ("", "-"):
                 value = 0
             else:
                 value = float(value)
         elif "checkbox" in param.inputType:
             value = value == "True"
-        elif "checkable" in param.inputType:
-            for val in value:
-                if val not in param.unitList:
-                    print(f"\033[33mCannot update valueList attribute of {param} with {value} since it is not a valid value.\033[0m", file=stderr)
-                    return
         elif "dropdown" in param.inputType:
             if value not in param.unitList:
                 print(f"\033[33mCannot update valueList attribute of {param} with {value} since it is not a valid value.\033[0m", file=stderr)
@@ -145,6 +149,17 @@ class ControlAPI():
         """
         gateTree = GateTree()
         return gateTree.yamlData["gate"]["units"][unit]
+
+    @staticmethod
+    def getYamlConstants(constant: str) -> list[str]:
+        """
+        Get the selected units.
+
+        Args:
+            unit: yaml static keyword for the selected unit
+        """
+        gateTree = GateTree()
+        return gateTree.yamlData["constant"][constant]
 
     @staticmethod
     def getProcessTypes() -> list[str]:

@@ -141,7 +141,7 @@ class GateTree(GateObjectInterface, metaclass=SingletonMeta):
                     default_unit_index = value
                     default_value = [unit_list[value]]
         else: # If there is nothing in the unit list, put the placeholder for nothing
-            unit_list = self._getYamlData("placeholder/empty_units")
+            unit_list = self._getYamlData("constant/EMPTY_UNITS")
             default_unit_index = 0
             default_value = [unit_list[default_unit_index]] * len(default_value)
 
@@ -193,14 +193,15 @@ class GateTree(GateObjectInterface, metaclass=SingletonMeta):
             macroFormater: function that renders the macro of the parameter.
         """
         paramRowBuilder = {
-            "text":     self.createParamTextRow,
-            "dropdown": self.createParamDropdownRow,
-            "checkbox": self.createParamCheckboxRow,
-            "select":   self.createParamSelectRow,
-            "label":    self.createParamLabelRow,
-            "macro_dropdown": self.createParamDropdownRow,
-            "material_dropdown": self.createParamMaterialDropdown,
-            "macro": self.createParamMacro,
+            "text":                     self.createParamTextRow,
+            "multiple_text":            self.createParamTextRow,
+            "dropdown":                 self.createParamDropdownRow,
+            "checkbox":                 self.createParamCheckboxRow,
+            "select":                   self.createParamSelectRow,
+            "label":                    self.createParamLabelRow,
+            "macro_dropdown":           self.createParamDropdownRow,
+            "material_dropdown":        self.createParamMaterialDropdown,
+            "macro":                    self.createParamMacro,
             "attached_volume_checkbox": self.createParamAttachVolumeCheckboxRow
         }
         
@@ -223,14 +224,14 @@ class GateTree(GateObjectInterface, metaclass=SingletonMeta):
             macroFormater: function that renders the macro of the parameter
         """
         paramRowBuilder = {
-            "dynamic_dropdown": self.createParamDynamicDropdown,
-            "object_name_dropdown": self.createParamObjectNameDropdownRow,
-            "checkable_object_name_dropdown": self.createParamCheckableObjectNameDropdownRow,
-            "children_name_dropdown": self.createParamChildrenNameDropdownRow,
-            "attached_volume_dropdown": self.createParamAttachedVolumeDropdownRow,
-            "digitizer_detector_dropdown": self.createParamDigitizerDetectorDropdownRow,
-            "dynamic_label": self.createParamDynamicLabel,
-            "dynamic_object_name_dropdown": self.createParamDynamicObjectNameDropdownRow
+            "dynamic_dropdown":                         self.createParamDynamicDropdown,
+            "object_name_dropdown":                     self.createParamObjectNameDropdownRow,
+            "checkable_object_name_dropdown":           self.createParamCheckableObjectNameDropdownRow,
+            "children_name_dropdown":                   self.createParamChildrenNameDropdownRow,
+            "attached_volume_dropdown":                 self.createParamAttachedVolumeDropdownRow,
+            "checkable_digitizer_detector_dropdown":    self.createParamCheckableDigitizerDetectorDropdownRow,
+            "dynamic_label":                            self.createParamDynamicLabel,
+            "dynamic_object_name_dropdown":             self.createParamDynamicObjectNameDropdownRow
         }
 
         sectionSizeWithoutDynamicParam = 0
@@ -265,7 +266,7 @@ class GateTree(GateObjectInterface, metaclass=SingletonMeta):
         default_unit_index: int = param["property"]["default_unit_index"]
 
         for index, label_macro_dict in enumerate(param["label_list"]):
-            gateObject.paramList.insert(paramIndex + index, GateParameter(macroFormater(gateObject.name, label_macro_dict["macro"]), label_macro_dict["label"], type_input, default_value, label_macro_dict["multiplicity"], unit_list, default_unit_index, param["property"]))
+            gateObject.paramList.insert(paramIndex + index, GateParameter(macroFormater(gateObject.name, label_macro_dict["macro"]), label_macro_dict["label"], type_input, default_value, unit_list, default_unit_index, param["property"]))
 
     def createParamDropdownRow(self, gateObject: GateObject, param: dict, paramIndex: int, macroFormater: function):
         """
@@ -291,7 +292,7 @@ class GateTree(GateObjectInterface, metaclass=SingletonMeta):
                 default_value = [value_list[value]]
 
         for index, label_macro_dict in enumerate(param["label_list"]):
-            gateObject.paramList.insert(paramIndex + index, GateParameter(macroFormater(gateObject.name, label_macro_dict["macro"]), label_macro_dict["label"], type_input, default_value, label_macro_dict["multiplicity"], value_list, default_unit_index, param["property"]))
+            gateObject.paramList.insert(paramIndex + index, GateParameter(macroFormater(gateObject.name, label_macro_dict["macro"]), label_macro_dict["label"], type_input, default_value, value_list, default_unit_index, param["property"]))
 
     def createParamObjectNameDropdownRow(self, gateObject: GateObject, param: dict, paramIndex: int, macroFormater: function):
         """
@@ -325,7 +326,7 @@ class GateTree(GateObjectInterface, metaclass=SingletonMeta):
                 default_value = [unit_list[value]]
 
         for index, label_macro_dict in enumerate(param["label_list"]):
-            gateParameter = GateParameter(macroFormater(gateObject.name, label_macro_dict["macro"]), label_macro_dict["label"], type_input, default_value, label_macro_dict["multiplicity"], unit_list, default_unit_index, param["property"])
+            gateParameter = GateParameter(macroFormater(gateObject.name, label_macro_dict["macro"]), label_macro_dict["label"], type_input, default_value, unit_list, default_unit_index, param["property"])
             gateObject.paramList.insert(paramIndex + index, gateParameter)
             self.gateTreeSubscriber.append(gateParameter)
 
@@ -342,7 +343,6 @@ class GateTree(GateObjectInterface, metaclass=SingletonMeta):
         # Get the value out of "property"
         type_input: str = param["property"]["type"]
         default_value: list[any] = param["property"]["default_value"]
-        default_unit_index: int = 0
         object_path: list[str] = param["property"]["object_path"]
 
         observedObjectList = [self.getObjectFromGateObjectPath(gateObject, object_path)]
@@ -364,7 +364,7 @@ class GateTree(GateObjectInterface, metaclass=SingletonMeta):
             default_value.insert(valueListIndex, valueList)
 
         for index, label_macro_dict in enumerate(param["label_list"]):
-            gateParameter = GateParameter(macroFormater(gateObject.name, label_macro_dict["macro"]), label_macro_dict["label"], type_input, default_value, label_macro_dict["multiplicity"], unit_list, default_unit_index, param["property"])
+            gateParameter = GateParameter(macroFormater(gateObject.name, label_macro_dict["macro"]), label_macro_dict["label"], type_input, default_value, unit_list, None, param["property"])
             gateObject.paramList.insert(paramIndex + index, gateParameter)
             self.gateTreeSubscriber.append(gateParameter)
 
@@ -384,7 +384,7 @@ class GateTree(GateObjectInterface, metaclass=SingletonMeta):
         object_path: list[str] = param["property"]["object_path"]
 
         observedObjectList = list(self.getObjectFromGateObjectPath(gateObject, object_path).children.values())
-        unit_list = self._getYamlData("placeholder/empty_units")
+        unit_list = self._getYamlData("constant/EMPTY_UNITS")
         while len(observedObjectList) > 0:
             observedObject: GateObject = observedObjectList.pop(0)
             unit_list.append(observedObject.name)
@@ -394,13 +394,13 @@ class GateTree(GateObjectInterface, metaclass=SingletonMeta):
         unit_list, default_value, default_unit_index = self._updateUnitList(unit_list, default_value)
 
         for index, label_macro_dict in enumerate(param["label_list"]):
-            gateParameter = GateParameter(macroFormater(gateObject.name, label_macro_dict["macro"]), label_macro_dict["label"], type_input, default_value, label_macro_dict["multiplicity"], unit_list, default_unit_index, param["property"])
+            gateParameter = GateParameter(macroFormater(gateObject.name, label_macro_dict["macro"]), label_macro_dict["label"], type_input, default_value, unit_list, default_unit_index, param["property"])
             gateObject.paramList.insert(paramIndex + index, gateParameter)
             self.gateTreeSubscriber.append(gateParameter)
 
-    def createParamDigitizerDetectorDropdownRow(self, gateObject: GateObject, param: dict, paramIndex: int, macroFormater: function):
+    def createParamCheckableDigitizerDetectorDropdownRow(self, gateObject: GateObject, param: dict, paramIndex: int, macroFormater: function):
         """
-        Add a digitizer_detector_dropdown input to selected gate object at a precise index.
+        Add a checkable_digitizer_detector_dropdown input to selected gate object at a precise index.
         
         Args:
             gateObject: gate object to add the parameter
@@ -421,10 +421,18 @@ class GateTree(GateObjectInterface, metaclass=SingletonMeta):
                 inputName = f"{observedObject.name}_{detectorObject.name}"
                 unit_list.append(inputName)
 
-        unit_list, default_value, default_unit_index = self._updateUnitList(unit_list, default_value)
+        # Transform every index in the default value to its string conterpart
+        for valueListIndex in range(len(default_value)):
+            valueList = default_value.pop(valueListIndex)
+
+            for valueIndex in range(len(valueList)):
+                if type(valueList[valueIndex]) == int:
+                    valueList[valueIndex] = unit_list[valueList[valueIndex]]
+
+            default_value.insert(valueListIndex, valueList)
 
         for index, label_macro_dict in enumerate(param["label_list"]):
-            gateParameter = GateParameter(macroFormater(gateObject.name, label_macro_dict["macro"]), label_macro_dict["label"], type_input, default_value, label_macro_dict["multiplicity"], unit_list, default_unit_index, param["property"])
+            gateParameter = GateParameter(macroFormater(gateObject.name, label_macro_dict["macro"]), label_macro_dict["label"], type_input, default_value, unit_list, None, param["property"])
             gateObject.paramList.insert(paramIndex + index, gateParameter)
             self.gateTreeSubscriber.append(gateParameter)
 
@@ -456,7 +464,7 @@ class GateTree(GateObjectInterface, metaclass=SingletonMeta):
 
         signalBroker = SignalBroker()
         for index, label_macro_dict in enumerate(param["label_list"]):
-            gateParameter = GateParameter(macroFormater(gateObject.name, label_macro_dict["macro"]), label_macro_dict["label"], type_input, default_value, label_macro_dict["multiplicity"], unit_list, default_unit_index, param["property"])
+            gateParameter = GateParameter(macroFormater(gateObject.name, label_macro_dict["macro"]), label_macro_dict["label"], type_input, default_value, unit_list, default_unit_index, param["property"])
             gateObject.paramList.insert(paramIndex + index, gateParameter)
             signalBroker.addDynamicSubscriber(gateParameter, DynamicSignal.ATTACHED_VOLUME)
 
@@ -475,7 +483,7 @@ class GateTree(GateObjectInterface, metaclass=SingletonMeta):
         default_value: list[bool] = param["property"]["default_value"]
 
         for index, label_macro_dict in enumerate(param["label_list"]):
-            gateObject.paramList.insert(paramIndex + index, GateParameter(macroFormater(gateObject.name, label_macro_dict["macro"]), label_macro_dict["label"], type_input, default_value, label_macro_dict["multiplicity"], None, None))
+            gateObject.paramList.insert(paramIndex + index, GateParameter(macroFormater(gateObject.name, label_macro_dict["macro"]), label_macro_dict["label"], type_input, default_value, None, None))
 
     def createParamAttachVolumeCheckboxRow(self, gateObject: GateObject, param: dict, paramIndex: int, macroFormater: function):
         """
@@ -493,7 +501,7 @@ class GateTree(GateObjectInterface, metaclass=SingletonMeta):
 
         signalBroker = SignalBroker()
         for index, label_macro_dict in enumerate(param["label_list"]):
-            gateParameter = GateParameter(macroFormater(gateObject.name, label_macro_dict["macro"]), label_macro_dict["label"], type_input, default_value, label_macro_dict["multiplicity"], None, None)
+            gateParameter = GateParameter(macroFormater(gateObject.name, label_macro_dict["macro"]), label_macro_dict["label"], type_input, default_value, None, None)
             gateObject.paramList.insert(paramIndex + index, gateParameter)
             signalBroker.addDynamicPublisher(gateParameter, DynamicSignal.ATTACHED_VOLUME)
 
@@ -512,7 +520,7 @@ class GateTree(GateObjectInterface, metaclass=SingletonMeta):
         default_value: list[any] = param["property"]["default_value"]
 
         for index, label_macro_dict in enumerate(param["label_list"]):
-            gateObject.paramList.insert(paramIndex + index, GateParameter(macroFormater(gateObject.name, label_macro_dict["macro"]), label_macro_dict["label"], type_input, default_value, label_macro_dict["multiplicity"], None, None, param["property"]))
+            gateObject.paramList.insert(paramIndex + index, GateParameter(macroFormater(gateObject.name, label_macro_dict["macro"]), label_macro_dict["label"], type_input, default_value, None, None, param["property"]))
 
     def createParamLabelRow(self, gateObject: GateObject, param: dict, paramIndex: int, macroFormater: function):
         """
@@ -528,7 +536,7 @@ class GateTree(GateObjectInterface, metaclass=SingletonMeta):
         type_input: str = param["property"]["type"]
 
         for index, label_macro_dict in enumerate(param["label_list"]):
-            gateObject.paramList.insert(paramIndex + index, GateParameter("", label_macro_dict["label"], type_input, [0], label_macro_dict["multiplicity"], None, None, param["property"]))
+            gateObject.paramList.insert(paramIndex + index, GateParameter("", label_macro_dict["label"], type_input, [0], None, None, param["property"]))
 
     def createParamDynamicDropdown(self, gateObject: GateObject, param: dict, paramIndex: int, macroFormater: function):
         """
@@ -564,7 +572,7 @@ class GateTree(GateObjectInterface, metaclass=SingletonMeta):
         unit_list, default_value, default_unit_index = self._updateUnitList(unit_list, default_value)
 
         for index, label_macro_dict in enumerate(param["label_list"]):
-            gateParameter = GateParameter(macroFormater(gateObject.name, label_macro_dict["macro"]), label_macro_dict["label"], "dynamic_dropdown", default_value, label_macro_dict["multiplicity"], unit_list, default_unit_index, param["property"])
+            gateParameter = GateParameter(macroFormater(gateObject.name, label_macro_dict["macro"]), label_macro_dict["label"], "dynamic_dropdown", default_value, unit_list, default_unit_index, param["property"])
             gateObject.paramList.insert(paramIndex + index, gateParameter)
             for parameterPublisher in paramToReach:
                 parameterPublisher.addSubcriber(gateParameter)
@@ -599,7 +607,7 @@ class GateTree(GateObjectInterface, metaclass=SingletonMeta):
             for i in range(len(objectPath)):
                 paramLabel = paramLabel.replace(f"&{i}", valueToken[i])
 
-            gateParameter = GateParameter("", paramLabel, type_input, [0], label_macro_dict["multiplicity"], None, None, param["property"] | label_macro_dict)
+            gateParameter = GateParameter("", paramLabel, type_input, [0], None, None, param["property"] | label_macro_dict)
             gateObject.paramList.insert(paramIndex + index, gateParameter)
             for paramPublisher in paramToReach:
                 paramPublisher.addSubcriber(gateParameter)
@@ -619,7 +627,7 @@ class GateTree(GateObjectInterface, metaclass=SingletonMeta):
         default_value: str = param["property"]["default_value"]
 
         for index, label_macro_dict in enumerate(param["label_list"]):
-            gateObject.paramList.insert(paramIndex + index, GateParameter(label_macro_dict["macro"], label_macro_dict["label"], type_input, default_value, label_macro_dict["multiplicity"]))
+            gateObject.paramList.insert(paramIndex + index, GateParameter(label_macro_dict["macro"], label_macro_dict["label"], type_input, default_value))
 
     def createParamDynamicObjectNameDropdownRow(self, gateObject: GateObject, param: dict, paramIndex: int, macroFormater: function):
         """
@@ -661,7 +669,7 @@ class GateTree(GateObjectInterface, metaclass=SingletonMeta):
         unit_list, default_value, default_unit_index = self._updateUnitList(unit_list, default_value)
         
         for index, label_macro_dict in enumerate(param["label_list"]):
-            gateParameter = GateParameter(macroFormater(gateObject.name, label_macro_dict["macro"]), label_macro_dict["label"], "dynamic_dropdown", default_value, label_macro_dict["multiplicity"], unit_list, default_unit_index, param["property"])
+            gateParameter = GateParameter(macroFormater(gateObject.name, label_macro_dict["macro"]), label_macro_dict["label"], "dynamic_dropdown", default_value, unit_list, default_unit_index, param["property"])
             gateObject.paramList.insert(paramIndex + index, gateParameter)
             for parameterPublisher in paramToReach:
                 parameterPublisher.addSubcriber(gateParameter)
@@ -683,7 +691,7 @@ class GateTree(GateObjectInterface, metaclass=SingletonMeta):
         unit_list, default_value, default_unit_index = self._updateUnitList(value_list, default_value)
 
         for index, label_macro_dict in enumerate(param["label_list"]):
-            gateObject.paramList.insert(paramIndex + index, GateParameter(macroFormater(gateObject.name, label_macro_dict["macro"]), label_macro_dict["label"], "dropdown", default_value, label_macro_dict["multiplicity"], unit_list, default_unit_index, param["property"]))
+            gateObject.paramList.insert(paramIndex + index, GateParameter(macroFormater(gateObject.name, label_macro_dict["macro"]), label_macro_dict["label"], "dropdown", default_value, unit_list, default_unit_index, param["property"]))
 
     ### gate children factories
 
@@ -750,13 +758,9 @@ class GateTree(GateObjectInterface, metaclass=SingletonMeta):
         childObject = GateObject(childName)
         parentObject.addChild(childObject)
 
-        for paramToNotify in self.gateTreeSubscriber:
-            paramToNotify.receiveNotification()
-
         return childObject
 
-    @staticmethod
-    def initObjectParam(gateObject: GateObject):
+    def initObjectParam(self, gateObject: GateObject):
         """
         Initialise the gate object's parameter and link them together.
 
@@ -768,6 +772,9 @@ class GateTree(GateObjectInterface, metaclass=SingletonMeta):
 
         for param in gateObject.param.values():
             param.notifyAllSubscriber()
+
+        for paramToNotify in self.gateTreeSubscriber:
+            paramToNotify.receiveNotification()
 
     ### GateTree abstract implementation
     

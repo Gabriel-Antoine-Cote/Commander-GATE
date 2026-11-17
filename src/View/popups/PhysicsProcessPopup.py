@@ -23,7 +23,7 @@ class PhysicsProcessPopup(QDialog):
         self.setModal(True)
         self.setWindowFlag(Qt.WindowType.WindowStaysOnTopHint)
         self.setAttribute(Qt.WidgetAttribute.WA_DeleteOnClose)
-        self.setMinimumSize(400, 100)
+        self.setMinimumSize(400, 150)
         self.onCreateCallback = on_create
         self.onCreateCallbackArgs = on_create_args
         self.font_size = parent.font().pointSize()

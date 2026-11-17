@@ -73,7 +73,12 @@ class GateObject(GateObjectInterface):
     @name.setter
     def name(self, name: str):
         self._name = name
-        self._updatePathRecursive()
+        self._path = self._path.rsplit("/", 1)[0] + "/" + name
+        childrenList = list(self.children.values())
+        for child in childrenList:
+            self.children.pop(child.name)
+            self.children[child.name] = child
+            child._updatePathRecursive()
 
     @parent.setter
     def parent(self, parent: GateObjectInterface):
