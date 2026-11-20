@@ -195,20 +195,15 @@ class InspectorSection:
             inputWidget = widgetLayout.itemAt(2).widget()
 
         if isinstance(inputWidget, MultipleText):
-            labelWidget: QLabel         = widget.layout().takeAt(0).widget()
-            inputWidget: MultipleText   = widget.layout().takeAt(1).widget()
-
-            currentLayout = widget.layout()
-            currentLayout.deleteLater()
-            widget.deleteLater()
-
-            inputWidget.layout().itemAt(0).widget().layout().insertWidget(0, labelWidget, alignment=Qt.AlignmentFlag.AlignVCenter)
-            inputWidget.layout().itemAt(0).widget().layout().insertStretch(1, 1)
-
+            inputWidget: MultipleText   = widget.layout().takeAt(2).widget()  
+            inputWidget.setParent(None)
+            labelWidget: QLabel = widget.layout().takeAt(0).widget()
+            inputWidget.layout().itemAt(0).widget().layout().insertWidget(0, labelWidget)
+            
             row_item = QStandardItem()
             model.appendRow(row_item)
             self.listview.setIndexWidget(row_item.index(), inputWidget)
-            self._apply_row_height(row_item, inputWidget, fs, vpad=vpad)            
+            self._apply_row_height(row_item, inputWidget, fs, vpad=vpad)    
 
         else:
             row_item = QStandardItem()
@@ -711,11 +706,6 @@ class InspectorSection:
             fontSize: font size
         """
         w = MultipleText(param.unitList)
-        w.setFont(self._font(fontSize))
-        w.lineEdit.setFixedWidth(60 + fontSize)
-        if len(w.units) > 0:
-            w.unitDropdown.setFixedWidth(120 + fontSize * 2)
-        w.addButton.setFixedHeight(24 + fontSize * 2)
         w.addValues(param.valueList[fieldIndex])
         w.dataChanged.connect(lambda: self.updateParamMultipleTextValue(w, objectPath, param.displayedLabel, fieldIndex))
         return w
@@ -1272,7 +1262,7 @@ class InspectorSection:
 
         # ---- row heights ----
         row_h = self._control_height(font_size)
-        vpadMultiline = 10
+        vpadMultiline = 4
         for entry in self.inspector_widgets:
             # apply height to all widgets
             if isinstance(entry, dict):

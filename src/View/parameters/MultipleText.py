@@ -30,6 +30,7 @@ class MultipleText(QWidget):
         rowWidget = QWidget()
         lineEditlayout = QHBoxLayout()
         rowWidget.setLayout(lineEditlayout)
+        lineEditlayout.setContentsMargins(1,2,1,2)
 
         lineEditlayout.addStretch()
 
@@ -41,19 +42,19 @@ class MultipleText(QWidget):
         self.lineEdit.setValidator(validator)
         self.lineEdit.setSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Fixed)
         self.lineEdit._edited = False
-        lineEditlayout.addWidget(self.lineEdit, alignment=Qt.AlignmentFlag.AlignVCenter)
+        lineEditlayout.addWidget(self.lineEdit)
 
         # Build the unit dropdown
         if len(self.units) > 0:
             self.unitDropdown.addItems(self.units)
             self.unitDropdown.setStyleSheet("QComboBox : { border: 1px solid black }")
-            lineEditlayout.addWidget(self.unitDropdown, alignment=Qt.AlignmentFlag.AlignVCenter)
+            lineEditlayout.addWidget(self.unitDropdown)
 
         # Build the button to add
         self.addButton.setText("Add")
         self.addButton.setStyleSheet("QPushButton : { border: 1px solid black }")
         self.addButton.clicked.connect(lambda: self.addTextLine(self.lineEdit.text()))
-        lineEditlayout.addWidget(self.addButton, alignment=Qt.AlignmentFlag.AlignVCenter)
+        lineEditlayout.addWidget(self.addButton)
 
         self.widgetLayout.addWidget(rowWidget)
         ### Build the list view
@@ -71,6 +72,7 @@ class MultipleText(QWidget):
         text = str(text)
 
         rowWidget.setLayout(lineLabelLayout)
+        lineLabelLayout.setContentsMargins(1,2,1,2)
 
         # Remove button
         removeButton = QPushButton(self)
@@ -111,14 +113,15 @@ class MultipleText(QWidget):
 
     
     def setFixedHeight(self, row_h):
-        vpadMultiline = 10
+        vpadMultiline = 4
         layoutCount = self.layout().count()
         super().setFixedHeight((row_h + vpadMultiline) * layoutCount)
+        self.layout().setContentsMargins(0,0,0,0)
         
         # For the first row
         firstRow = self.layout().itemAt(0).widget()
-        label: QLabel = firstRow.layout().itemAt(0).widget()
-        label.setFixedHeight(row_h)
+        # label: QLabel = firstRow.layout().itemAt(0).widget()
+        # label.setFixedHeight(row_h)
         
         self.lineEdit.setFixedHeight(row_h)
         self.addButton.setFixedHeight(row_h)
