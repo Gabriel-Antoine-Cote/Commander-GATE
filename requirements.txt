@@ -4,10 +4,20 @@
 #
 #    pip-compile --output-file=requirements.txt pyproject.toml
 #
+altgraph==0.17.5
+    # via pyinstaller
 numpy==2.5.4
     # via
     #   Commander-GATE (pyproject.toml)
     #   scipy
+packaging==26.3
+    # via
+    #   pyinstaller
+    #   pyinstaller-hooks-contrib
+pyinstaller==6.22.3
+    # via Commander-GATE (pyproject.toml)
+pyinstaller-hooks-contrib==2026.10
+    # via pyinstaller
 pyqt6==6.12.0
     # via Commander-GATE (pyproject.toml)
 pyqt6-qt6==6.12.0
@@ -16,3 +26,6 @@ pyqt6-sip==13.13.0
     # via pyqt6
 scipy==1.18.1
     # via Commander-GATE (pyproject.toml)
+
+# The following packages are considered to be unsafe in a requirements file:
+# setuptools

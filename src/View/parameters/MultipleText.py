@@ -108,3 +108,27 @@ class MultipleText(QWidget):
                 break
         
         self.dataChanged.emit()
+
+    
+    def setFixedHeight(self, row_h):
+        vpadMultiline = 10
+        layoutCount = self.layout().count()
+        super().setFixedHeight((row_h + vpadMultiline) * layoutCount)
+        
+        # For the first row
+        firstRow = self.layout().itemAt(0).widget()
+        label: QLabel = firstRow.layout().itemAt(0).widget()
+        label.setFixedHeight(row_h)
+        
+        self.lineEdit.setFixedHeight(row_h)
+        self.addButton.setFixedHeight(row_h)
+        if len(self.units) > 0:
+            self.unitDropdown.setFixedHeight(row_h) 
+        firstRow.setFixedHeight(row_h + vpadMultiline)
+        
+        # For text rows
+        for rowWidgetIndex in range(1, layoutCount):
+            rowWidget = self.layout().itemAt(rowWidgetIndex).widget()
+            rowWidget.setFixedHeight(row_h + vpadMultiline)
+            rowWidget.layout().itemAt(0).widget().setFixedHeight(row_h)
+            rowWidget.layout().itemAt(2).widget().setFixedHeight(row_h)

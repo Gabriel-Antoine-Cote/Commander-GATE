@@ -192,11 +192,11 @@ class InspectorSection:
         widgetLayout = widget.layout()
         inputWidget = None
         if widgetLayout:
-            inputWidget = widgetLayout.itemAt(1).widget()
+            inputWidget = widgetLayout.itemAt(2).widget()
 
         if isinstance(inputWidget, MultipleText):
             labelWidget: QLabel         = widget.layout().takeAt(0).widget()
-            inputWidget: MultipleText   = widget.layout().takeAt(0).widget()
+            inputWidget: MultipleText   = widget.layout().takeAt(1).widget()
 
             currentLayout = widget.layout()
             currentLayout.deleteLater()
@@ -208,9 +208,7 @@ class InspectorSection:
             row_item = QStandardItem()
             model.appendRow(row_item)
             self.listview.setIndexWidget(row_item.index(), inputWidget)
-            self._apply_row_height(row_item, inputWidget, fs, vpad=vpad)
-            
-            
+            self._apply_row_height(row_item, inputWidget, fs, vpad=vpad)            
 
         else:
             row_item = QStandardItem()
@@ -629,6 +627,7 @@ class InspectorSection:
         label.setMinimumWidth(self._label_min_px(fontSize))
         label.setAlignment(Qt.AlignmentFlag.AlignVCenter)
         h.addWidget(label)
+        h.addStretch(1)
         
         inputs = []
         for i in range(len(param.valueList)):
@@ -1287,38 +1286,7 @@ class InspectorSection:
 
             for w in widgets:
                 if w and hasattr(w, "setFixedHeight"):
-                    if isinstance(w, MultipleText):
-                        layoutCount = w.layout().count()
-                        w.setFixedHeight((row_h + vpadMultiline) * layoutCount)
-                        
-                        # For the first row
-
-                        firstRow = w.layout().itemAt(0).widget()
-                        label: QLabel = firstRow.layout().itemAt(0).widget()
-                        label.setFixedHeight(row_h)
-                        # label.move(label.pos().x(), label.pos().y() - 10)
-                        # firstRow.layout().itemAt(0).widget().setContentsMargins(0,int(vpad/2),0,int(vpad/2))
-
-                        w.lineEdit.setFixedHeight(row_h)
-                        # w.lineEdit.move(w.lineEdit.pos().x(), w.lineEdit.pos().y() - 10)
-                        # w.lineEdit.setContentsMargins(0,int(vpad/2),0,int(vpad/2))
-                        w.addButton.setFixedHeight(row_h)
-                        # w.addButton.setContentsMargins(0,int(vpad/2),0,int(vpad/2))
-                        if len(w.units) > 0:
-                            w.unitDropdown.setFixedHeight(row_h) 
-                            # w.unitDropdown.setContentsMargins(0,int(vpad/2),0,int(vpad/2))
-                        firstRow.setFixedHeight(row_h + vpadMultiline)
-
-                        # For text rows
-                        for rowWidgetIndex in range(1, layoutCount):
-                            rowWidget = w.layout().itemAt(rowWidgetIndex).widget()
-                            rowWidget.setFixedHeight(row_h + vpadMultiline)
-                            rowWidget.layout().itemAt(0).widget().setFixedHeight(row_h)
-                            rowWidget.layout().itemAt(2).widget().setFixedHeight(row_h)
-                            # rowWidget.layout().itemAt(0).widget().setContentsMargins(0,int(vpad/2),0,int(vpad/2))
-                            # rowWidget.layout().itemAt(2).widget().setContentsMargins(0,int(vpad/2),0,int(vpad/2))
-                    else:
-                        w.setFixedHeight(row_h)
+                    w.setFixedHeight(row_h)
 
         # normalize QListView row heights to fix the clipping
         model = self.listview.model()

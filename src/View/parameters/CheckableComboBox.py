@@ -4,8 +4,15 @@ from PyQt6.QtCore import Qt
 from src.Control.ControlAPI import ControlAPI
 
 class CheckableComboBox(QComboBox):
+    """A wrapper for the QComboBox to enable the user to choose multiple option from a list."""
 
     def __init__(self, parent: QWidget = None):
+        """
+        Initialise the widget.
+
+        Args:
+            parent: Owner of this widget
+        """
         super().__init__(parent)
 
         self.setEditable(True)
@@ -13,7 +20,14 @@ class CheckableComboBox(QComboBox):
         self.setModel(QStandardItemModel(self))
         self.model().dataChanged.connect(self.updateText)
 
-    def addItems(self, itemsList, checkedItemsList):
+    def addItems(self, itemsList: list[str], checkedItemsList: list[str]):
+        """
+        fill the list with the options from itemsList and check those found in checkeItemsList
+
+        Args:
+            itemsList: list of option to choose from
+            checkedItemsList: list of option already chosen
+        """
         emptyUnit = ControlAPI.getYamlConstants("EMPTY_UNITS")[0]
         for itemName in itemsList:
             item = QStandardItem()
